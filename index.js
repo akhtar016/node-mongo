@@ -13,14 +13,14 @@ app.use(bodyParser.json());
 const uri = process.env.DB_PATH;
 
 let client = new MongoClient(uri, { useNewUrlParser: true });
-const users = ["Asad", "Moin", "Sabed", "Susmita", "Sohana", "Sabana"];
+
 
 app.get("/products", (req, res) => {
   client = new MongoClient(uri, { useNewUrlParser: true });
   client.connect(err => {
     const collection = client.db("onlineStore").collection("products");
 
-    collection.find().limit(10).toArray((err, documents) => {
+    collection.find().toArray((err, documents) => {
       if (err) {
         res.status(500).send({ message: err });
         console.log(err);
@@ -33,13 +33,71 @@ app.get("/products", (req, res) => {
   });
 });
 
-app.get("/users/:id", (req, res) => {
-  console.log(req.params);
+app.get("/product/:key", (req, res) => {
 
-  const userId = req.params.id;
-  const name = users[userId];
-  res.send({ userId, name });
+  const key = req.params.key;
+
+  client = new MongoClient(uri, { useNewUrlParser: true });
+  client.connect(err => {
+    const collection = client.db("onlineStore").collection("products");
+
+    collection.find({key}).toArray((err, documents) => {
+      if (err) {
+        res.status(500).send({ message: err });
+        console.log(err);
+      } else {
+        res.send(documents[0]);
+      }
+    });
+    console.log("Database connected.....");
+    client.close();
+  });
+
+  //const name = users[userId];
+ // res.send({ userId, name });
+  
 });
+
+
+
+
+app.post("/getProductsByKey", (req, res) => {
+
+  const key = req.params.key;
+  const productKeys = req.body;
+
+  console.log(productKeys)
+
+  client = new MongoClient(uri, { useNewUrlParser: true });
+  client.connect(err => {
+    const collection = client.db("onlineStore").collection("products");
+
+    collection.find({key: {$in: productKeys}}).toArray((err, documents) => {
+      if (err) {
+        res.status(500).send({ message: err });
+        console.log(err);
+      } else {
+        res.send(documents);
+      }
+    });
+    console.log("Database connected.....");
+    client.close();
+  });
+
+});
+
+
+// Have to learn how to delete data
+// Have to learn how to update data
+
+
+
+
+
+
+
+
+
 
 //post
 app.post("/addProduct", (req, res) => {
@@ -51,7 +109,7 @@ app.post("/addProduct", (req, res) => {
   
   client.connect(err => {
     const collection = client.db("onlineStore").collection("products");
-    collection.insertOne(product, (err, result) => {
+    collection.insert(product, (err, result) => {
       if (err) {
         res.status(500).send({ message: err });
         console.log(err);
