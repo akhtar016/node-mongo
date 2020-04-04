@@ -123,6 +123,35 @@ app.post("/addProduct", (req, res) => {
   });
 });
 
+
+
+
+
+app.post("/placeOrder", (req, res) => {
+  // save to database
+  const orderDetails = req.body;
+  orderDetails.orderTime = new Date();
+  console.log(orderDetails);
+
+
+  client = new MongoClient(uri, { useNewUrlParser: true });
+  
+  client.connect(err => {
+    const collection = client.db("onlineStore").collection("orders");
+    collection.insertOne(orderDetails, (err, result) => {
+      if (err) {
+        res.status(500).send({ message: err });
+        console.log(err);
+      } else {
+        res.send(result.ops[0]);
+        console.log("Successfully Inserted", result);
+      }
+    });
+    console.log("Database connected.....");
+    client.close();
+  });
+});
+
 const port = process.env.PORT || 4200;
 
 
